@@ -117,3 +117,38 @@ pub fn setup_persistent_ns(logger: Logger, ns_type: &'static str) -> Result<Name
         path: new_ns_path.into_os_string().into_string().unwrap(),
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        setup_persistent_ns,
+        NSTYPEIPC,
+        NSTYPEUTS,
+        PERSISTENT_NS_DIR,
+    };
+    use crate::{
+        skip_if_not_root,
+        mount::remove_mounts,
+    };
+
+    #[test]
+    fn test_setup_persistent_ns() {
+        skip_if_not_root!();
+
+        // TODO: Define if setup_persistent_ns really needs to own logger.
+        let logger = slog::Logger::root(slog::Discard, o!());
+        let res = setup_persistent_ns(logger, NSTYPEIPC);
+        assert!(res.is_ok());
+
+        let dir = vec![format!("{}/{}", PERSISTENT_NS_DIR, NSTYPEIPC)];
+        assert!(remove_mounts(&dir).is_ok());
+
+        let logger = slog::Logger::root(slog::Discard, o!());
+        let res = setup_persistent_ns(logger, NSTYPEUTS);
+        assert!(res.is_ok());
+
+        let dir = vec![format!("{}/{}", PERSISTENT_NS_DIR, NSTYPEUTS)];
+        assert!(remove_mounts(&dir).is_ok());
+    }
+}
+
